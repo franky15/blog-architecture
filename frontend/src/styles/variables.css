@@ -1,0 +1,80 @@
+/* src/styles/variables.css */
+:root {
+  /* Colors */
+  --primary-color: #6366f1; /* Indigo 500 */
+  --primary-hover: #4f46e5; /* Indigo 600 */
+  
+  --bg-light: #f8fafc; /* Slate 50 */
+  --bg-dark: #0f172a; /* Slate 900 */
+  
+  --text-light: #f1f5f9; /* Slate 100 */
+  --text-dark: #334155; /* Slate 700 */
+  
+  --surface-light: #ffffff;
+  --surface-dark: #1e293b; /* Slate 800 */
+  
+  --border-light: #e2e8f0; /* Slate 200 */
+  --border-dark: #334155; /* Slate 700 */
+  
+  --danger-color: #ef4444; /* Red 500 */
+  --success-color: #10b981; /* Emerald 500 */
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-glow: 0 0 15px rgba(99, 102, 241, 0.5);
+
+  /* Transitions */
+  --transition-fast: all 0.15s ease;
+  --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Glassmorphism */
+  --glass-bg: rgba(255, 255, 255, 0.05);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-blur: blur(12px);
+
+  /* Border Radius */
+  --radius-md: 0.5rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+}
+
+/* Light Theme Variables */
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg-main: var(--bg-light);
+    --text-main: var(--text-dark);
+    --surface-main: var(--surface-light);
+    --border-main: var(--border-light);
+    --glass-bg: rgba(0, 0, 0, 0.03);
+    --glass-border: rgba(0, 0, 0, 0.08);
+  }
+}
+
+/* Dark Theme Variables (default) */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-main: var(--bg-dark);
+    --text-main: var(--text-light);
+    --surface-main: var(--surface-dark);
+    --border-main: var(--border-dark);
+    --glass-bg: rgba(255, 255, 255, 0.05);
+    --glass-border: rgba(255, 255, 255, 0.1);
+  }
+}
+
+/* Forced classes if we want a manual theme switcher later */
+body.light-theme {
+    --bg-main: var(--bg-light);
+    --text-main: var(--text-dark);
+    --surface-main: var(--surface-light);
+    --border-main: var(--border-light);
+}
+
+body.dark-theme {
+    --bg-main: var(--bg-dark);
+    --text-main: var(--text-light);
+    --surface-main: var(--surface-dark);
+    --border-main: var(--border-dark);
+}
