@@ -437,3 +437,59 @@ Le deuxième `!` vient simplement remettre ce Booléen dans le bon sens !
   - 2ème bang `!true` ➔ `false` (Parfait, je ne suis pas connecté !)
 
 C'est pour cela que `!!` est l'astuce ultime des développeurs JavaScript pour s'assurer qu'une variable devient un booléen strict (`true` ou `false`), sans avoir besoin d'écrire un `if (valeur !== null && valeur !== "")`.
+
+---
+
+## 12. L'Architecture Senior : Clean Code & Custom Hooks
+
+Un composant "Junior" fait tout : il récupère la donnée, gère les clics, et écrit le HTML. C'est ce qu'on appelle un **God Component** (un composant divin qui sait tout faire). C'est impossible à maintenir en entreprise.
+
+**Le Pattern Senior : La Séparation des Préoccupations (Separation of Concerns)**
+Nous avons refondu le `Dashboard.jsx` pour appliquer cette règle d'or.
+
+### Étape 1 : Isoler la logique métier dans un Custom Hook (`useArticles.js`)
+Toute la logique Redux (`useSelector`, `useDispatch`), la pagination, et la gestion de la suppression ont été extraites dans un fichier à part appelé **Custom Hook**.
+- **Avantage :** La logique est réutilisable partout. Le Hook agit comme le "Cerveau". Il prend l'ID de l'espace, réfléchit, et ne retourne que le strict minimum (les variables prêtes à l'emploi).
+
+### Étape 2 : Créer des "Dumb Components" (`ArticleCard.jsx`)
+Les composants UI (l'affichage de la carte article, les boutons de pagination) sont extraits dans des composants "Stupides" (Dumb Components).
+- **Règle :** Un Dumb Component ne fait AUCUN appel API et n'utilise pas Redux. Il ne fait qu'afficher ce qu'on lui donne (via les `props`).
+- **Avantage :** Testabilité parfaite. On peut afficher une `ArticleCard` n'importe où, avec n'importe quelle donnée.
+
+### Étape 3 : Le Composant "Smart" affiné (`Dashboard.jsx`)
+Le `Dashboard.jsx` devient un simple chef d'orchestre. Il appelle le cerveau (`useArticles`) pour avoir la donnée, et il la donne aux musiciens (`ArticleCard`) pour la jouer. Le code passe de 220 lignes à 70 lignes. C'est ça, le Clean Code.
+
+---
+
+## 13. Les Intercepteurs de Réponse (Sécurité Passive)
+
+Dans `api.js`, nous utilisions un **Request Interceptor** pour mettre le jeton JWT dans le sac à dos (Header) avant le départ vers le Backend. Mais que se passe-t-il si ce jeton a expiré ?
+
+**Le Problème :**
+Le frontend voit toujours le jeton dans le `localStorage`. Le `AuthGuard` (Le Videur à l'entrée) te laisse donc entrer. Mais à chaque fois que tu vas vouloir faire une action, le Backend va te répondre une erreur 401 (Unauthorized).
+
+**La Solution Senior : Le Response Interceptor**
+On ajoute un deuxième intercepteur dans Axios, mais cette fois-ci sur la **RÉPONSE**. C'est un filet de sécurité global.
+Dès que n'importe quelle requête API revient du serveur avec un statut `401`, l'intercepteur s'en rend compte. Il purge immédiatement le `localStorage` et redirige brutalement l'utilisateur vers la page `/login`.
+Cela se fait de manière totalement transparente pour les composants React. Le `Dashboard` n'a même pas besoin de savoir que le jeton a expiré, Axios gère la crise en coulisses !
+
+### 13.1 Le secret de la syntaxe `.use()` (Les Callbacks)
+
+Quand on regarde le code de l'intercepteur de réponse :
+```javascript
+api.interceptors.response.use(
+    (response) => { return response; }, // Fonction 1
+    (error) => { ... }                  // Fonction 2
+);
+```
+Il est normal d'être confus car **il n'y a pas de condition `if/else` visible**. On ne voit pas pourquoi le code entre dans la fonction 1 ou dans la fonction 2.
+
+**L'explication :** Le `if/else` est caché à l'intérieur du code source de la librairie Axios !
+La fonction `.use()` obéit à une règle stricte, codée en dur (similaire au fonctionnement des `Promise` natives en JavaScript) :
+- Axios exécutera **TOUJOURS la première fonction** si le statut HTTP renvoyé par le backend est un **Succès (entre 200 et 299)**.
+- Axios exécutera **TOUJOURS la deuxième fonction** si le statut HTTP est une **Erreur (4xx ou 5xx)**.
+
+C'est pour cela que la condition n'est pas dans ton code. Tu ne fais que fournir deux enveloppes avec des consignes à Axios (une pour la réussite, une pour l'échec). C'est Axios qui ouvre la bonne enveloppe selon la réponse du serveur.
+
+**Pourquoi écrit-on `return response;` dans la première fonction ?**
+Un intercepteur est un "péage" sur l'autoroute des données. Si tu ne fais pas `return response;`, la donnée est détruite au péage ! Le composant React qui attendait les données va recevoir `undefined` et planter. Ce `return` lève la barrière du péage et laisse la réponse poursuivre sa route jusqu'au composant.

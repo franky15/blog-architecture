@@ -20,24 +20,20 @@ const authMiddleware = (req, res, next) => {
 
     try {
         // 2. On décode et vérifie le token avec notre clé secrète
-        // Si le token est faux ou expiré, ça "crashe" et on part direct dans le "catch".
-        // S'il est valide, jwt.verify() retourne un Objet JSON exact à ce qu'on a signé dans le Controller.
-        // Exemple de ce que contient 'decoded' : { "id": 1, "iat": 1695420000, "exp": 1695506400 }
+        // 💡 La librairie jsonwebtoken vérifie AUTOMATIQUEMENT la date d'expiration (le champ 'exp').
+        // Si le token est expiré, jwt.verify() lève une exception "TokenExpiredError" !
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
         // 3. DÉCORATION D'OBJET (Injection)
-        // En JavaScript, les objets sont flexibles. L'objet 'req' (la requête) n'a nativement pas de case 'user'.
-        // On crée dynamiquement cette propriété `req.user` et on y glisse notre objet 'decoded'.
-        // Comme le Middleware et le Controller se passent le MÊME objet 'req' en mémoire de main en main,
-        // le Controller pourra lire `req.user.id` pour savoir "qui" fait l'action !
         req.user = decoded;
 
         // 4. On laisse passer la requête vers la suite (le Controller)
         next();
 
     } catch (error) {
-        // Si jwt.verify() plante, on rejette le client (403 Forbidden : Token invalide/expiré)
-        return res.status(403).json({ error: "Token invalide ou expiré." });
+        // 🚨 IMPORTANT : On utilise 401 (Unauthorized) et non 403 (Forbidden) pour une erreur d'authentification.
+        // Cela permet à notre intercepteur Axios (Frontend) de capter ce 401 et de déconnecter l'utilisateur.
+        return res.status(401).json({ error: "Token invalide ou expiré." });
     }
 };
 
